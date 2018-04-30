@@ -17,7 +17,7 @@ To do:
 11. Logical master doesnt disable all children. Investigate further.
 --]]
 
-PluginVersion = "0.4"
+PluginVersion = "0.3"
 Tagline = "V"..PluginVersion.." - Bugs & Suggestions to Callum@nsl.co.nz - Visit www.nsl.co.nz"
 PluginInfo = 
 {
@@ -593,7 +593,7 @@ end
 
 function findTrans(trans)
   local transType
-  for i, v in ipairs(transitionsFriendly) do
+  for i, v in pairs(transitionsFriendly) do
     if v == trans then transType = transitions[i] break end
   end
   return transType
@@ -602,9 +602,9 @@ end
 function loadValues()   -- Read all string values.
   setStatus(0, "")
   local void = false
-  for i, v in ipairs(Controls.layer) do    -- Check for duplications in layers.
+  for i, v in pairs(Controls.layer) do    -- Check for duplications in layers.
     Controls["radio group"][i].Color = "white"
-    for q, w in ipairs(Controls.layer) do
+    for q, w in pairs(Controls.layer) do
       if i ~= q and v.String == w.String and #v.String > 0 then
         setStatus(2, "Layer "..i.." and "..q.." are both \""..w.String.."\"")
         void = true
@@ -620,11 +620,11 @@ function loadValues()   -- Read all string values.
   parents = {}
   if not void then    -- If no config errors are found, load parameters.
   
-  for i, v in ipairs(Controls.parent) do   -- Evaluate parent options.
+  for i, v in pairs(Controls.parent) do   -- Evaluate parent options.
     local parentChoices = {}
     local parentOK = false
     table.insert(parentChoices, "")
-    for q, w in ipairs(Controls.layer) do
+    for q, w in pairs(Controls.layer) do
       if v.String == w.String then parentOK = true end    -- Check that parent exists.
       if i ~= q
       and Controls.layer[i].String ~= Controls.parent[q].String
@@ -638,7 +638,7 @@ function loadValues()   -- Read all string values.
     v.Choices = parentChoices
   end
 
-    for i, v in ipairs(Controls.enable) do
+    for i, v in pairs(Controls.enable) do
       if #Controls.layer[i].String > 0 then
         layers[v] = {}
         layers[v]["index"] = i
@@ -666,7 +666,7 @@ function loadValues()   -- Read all string values.
           if not parents[Controls.parent[i].String] then
             parents[Controls.parent[i].String] = {}
             parents[Controls.parent[i].String].children = {}
-            for q, w in ipairs(Controls.layer) do
+            for q, w in pairs(Controls.layer) do
               if w.String == Controls.parent[i].String then
                 parents[Controls.parent[i].String].parent = Controls.enable[q]
               end
@@ -816,7 +816,7 @@ end
 Controls.page.EventHandler = loadValues
 Controls.uci.EventHandler = loadValues
 Controls.reset.EventHandler = checkState
-for i, v in ipairs(Controls.layer) do
+for i, v in pairs(Controls.layer) do
   Controls.layer[i].EventHandler = loadValues
   Controls["radio group"][i].EventHandler = function(ctl) Controls.parent[i].String = "" loadValues(ctl) end
   Controls["reset on parent"][i].EventHandler = loadValues
