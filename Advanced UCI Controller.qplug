@@ -23,6 +23,7 @@ To do:
 9. Children toggle incorrectly if parent is radio group. Done.
 10. Allow single member radio group. Done.
 11. Logical master doesnt disable all children. Investigate further.
+
 --]]
 
 PluginVersion = "0.2"
