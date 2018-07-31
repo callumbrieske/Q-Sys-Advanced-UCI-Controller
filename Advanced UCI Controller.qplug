@@ -17,7 +17,7 @@ To do:
 11. Logical master doesnt disable all children. Investigate further.
 --]]
 
-PluginVersion = "0.5"
+PluginVersion = "0.8"
 Tagline = "V"..PluginVersion.." - Bugs & Suggestions to Callum@nsl.co.nz - Visit www.nsl.co.nz"
 PluginInfo = 
 {
@@ -25,7 +25,7 @@ PluginInfo =
 	Version = PluginVersion,
 	Id = "ff4a7452-6edd-4280-9431-1b4c0219aac4",
 	Description = "Advanced UCI Controller",
-	ShowDebug = false,
+	ShowDebug = true,
 }
 
 function GetColor(props) 
@@ -52,9 +52,6 @@ end
 
 function GetControls(props)
 	ctrl = {}
-	for c=1, props["Number of Layers"].Value, 1 do
-	
-	end
 	table.insert(ctrl,
 		{
 			Name = "reset",
@@ -175,7 +172,7 @@ function GetControlLayout(props)
 		}
 	layout["uci"] = 
 		{
-			Style = "Text",
+			Style = "ComboBox",
 			Size = {122, 16},
 			Position = {76, 39},
 			HTextAlign = "Center",
@@ -183,7 +180,7 @@ function GetControlLayout(props)
 		}
 	layout["page"] = 
 		{
-			Style = "Text",
+			Style = "ComboBox",
 			Size = {122, 16},
 			Position = {76, 55},
 			HTextAlign = "Center",
@@ -211,7 +208,7 @@ function GetControlLayout(props)
 			}
 		layout["layer "..c] = 
 			{
-				Style = "Text",
+				Style = "ComboBox",
 				Size = {80, 16},
 				Position = {58, 127+(16*c)},
 				PrettyName = "Layer "..c.." Name",
@@ -473,6 +470,7 @@ function GetControlLayout(props)
 end
 
 if Controls then
+require("LuaXML")
 transitions = { "", "fade", "left", "right", "top", "bottom" }
 transitionsFriendly = { "None", "Fade", "Left", "Right", "Top", "Bottom" }
 colors = {"red", "orange", "yellow", "green", "blue", "purple", "pink", "aqua"}
@@ -482,6 +480,121 @@ layers = {}
 radioGroups = {}
 parents = {}
 parentChoices = {}
+
+-- \/\/\/ List UCI's & Layers \/\/\/
+design = {}
+xdata = {}
+
+function listUCIs(data)  -- Find all UCI's listed in UCIs.xml
+  if #data > 10 then
+    xdata = xml.eval(string.match(data, "<.*>"))
+    design.Name = xdata.DesignName
+    design.UCIs = {}
+    for i = 1, #xdata do
+      design.UCIs[i] = {}
+      design.UCIs[i].Name = xdata[i].Name
+      design.UCIs[i].Index = i
+      design.UCIs[i].FileName = xdata[i].FileName
+    end
+    
+    -- Insert Design Name.
+    --Controls["Design Name"].String = design.Name
+    
+    -- List UCI's.
+    local choices = {}
+    for i, v in ipairs(design.UCIs) do
+      table.insert(choices, v.Index..".  "..v.Name)
+    end
+    
+    -- Clear text boxes.
+    Controls["uci"].Choices = choices
+	local found = false
+	for i, v in ipairs(choices) do
+		if Controls["uci"].String == v then found = true end
+	end
+	if not found then Controls["uci"].Color = "red" else Controls["uci"].Color = nil end
+		
+    --Controls["UCI"].String = "Select a UCI"
+    --Controls["Layers"].Choices = {""}
+    --Controls["Layers"].String = "Select a UCI"
+    --Controls["Page"].Choices = {""}
+    --Controls["Page"].String = "Select a UCI"
+  else
+    -- If error, clear text boxes.
+    design = {}
+    --Controls["Design Name"].String = "Error loading XML"
+    Controls["uci"].Choices = {""}
+    Controls["uci"].String = "Error loading XML"
+    --Controls["Layers"].Choices = {""}
+    --Controls["Layers"].String = "Error loading XML"
+    --Controls["Page"].Choices = {""}
+    --Controls["Page"].String = "Error loading XML"
+    print("Error loading XML")
+  end
+end
+---[[
+function listPages(data) -- Parse UCI XML file to find number of pages.
+  if #data > 10 then
+    xdata = xml.eval(string.match(data, "<.*>"))
+    
+    local choices = {}
+    for i=2, #xdata do
+      table.insert(choices, (i-1)..".  "..xdata[i].Title)
+    end
+    Controls["page"].Choices = choices
+    --Controls["Page"].String = "Select a Page"
+    --Controls["Layers"].Choices = {""}
+    --Controls["Layers"].String = "Select a Page"
+  else
+    design = {}
+    --Controls["Design Name"].String = "Error loading XML"
+    --Controls["UCI"].Choices = {""}
+    --Controls["UCI"].String = "Error loading XML"
+    --Controls["Layers"].Choices = {""}
+    --Controls["Layers"].String = "Error loading XML"
+    Controls["page"].Choices = {""}
+    Controls["page"].String = "Error loading XML"
+    print("Error loading XML")
+  end
+end
+--]]
+--[[
+function listLayers() -- List layers on selected page.
+  local choices = {}
+  layerIndex = tonumber(string.match( Controls["Page"].String, "(.+)%." )) + 1
+  if #xdata[layerIndex][1] > 1 then
+    for i, v in ipairs(xdata[layerIndex][1]) do
+      if v.Name ~= nil then table.insert(choices, v.Name) end
+    end
+  else
+    table.insert(choices, xdata[layerIndex][1][1].Name)
+  end
+  Controls["Layers"].Choices = #choices > 0 and choices or {"Error, No layers found"} -- Should not be possible.
+  print("Error, No layers found")
+end
+--]]
+---[[
+function getPages() -- Load Selected UCI XML File.
+  file = io.open("design/UCIs/"..design.UCIs[tonumber(string.match( Controls["uci"].String, "(.+)%." ))].FileName, "r")
+  fileString = file:read("a*")
+  file:close()
+  file = nil
+  listPages(fileString)
+end
+--]]
+function getUCIs()  -- Load UCI index XML.
+  file = io.open("design/UCIs.xml", "r")
+  fileString = file:read("a*")
+  file:close()
+  file = nil
+  listUCIs(fileString)
+end
+--[[
+Controls["UCI"].EventHandler = getPages
+Controls["Page"].EventHandler = listLayers
+--]]
+
+-- /\/\/\ List UCI's & Layers /\/\/\
 
 function setStatus(l, t)
   Controls.status.Value = l
@@ -711,9 +824,13 @@ end
 
 -- Setup Event Handlers
 Controls.page.EventHandler = loadValues
-Controls.uci.EventHandler = loadValues
+Controls.uci.EventHandler = function()
+	getPages()
+	loadValues()
+end
 Controls.reset.EventHandler = checkState
 for i, v in ipairs(Controls.layer) do
+  if not v.String then v.String = "" end
   Controls.layer[i].EventHandler = loadValues
   Controls["radio group"][i].EventHandler = function(ctl) Controls.parent[i].String = "" loadValues(ctl) end
   Controls["reset on parent"][i].EventHandler = loadValues
@@ -727,5 +844,6 @@ for i, v in ipairs(Controls.layer) do
 end
 
 -- Perform initial evaluation.
+getUCIs()
 loadValues()
 end
