@@ -17,7 +17,7 @@ To do:
 11. Logical master doesnt disable all children. Investigate further.
 --]]
 
-PluginVersion = "0.5"
+PluginVersion = "1.0"
 Tagline = "V"..PluginVersion.." - Bugs & Suggestions to Callum@nsl.co.nz - Visit www.nsl.co.nz"
 PluginInfo = 
 {
