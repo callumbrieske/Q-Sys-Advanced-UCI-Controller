@@ -43,7 +43,7 @@ function GetProperties()
 		Name = "Number of Layers",
 		Type = "integer",
 		Min = 1,
-		Max = 64,
+		Max = 128,
 		Value = 6,
 	},
   }
